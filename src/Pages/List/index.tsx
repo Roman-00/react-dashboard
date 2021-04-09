@@ -1,9 +1,11 @@
 import React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 
 import { ContentHeader } from '../../components/ContentHeader/ContentHeader';
 import { SelectInput } from '../../components/SelectInput/SelectInput';
 import { HistoryFinanseCard } from '../../components/HistoryFinanceCard/HistoryFinanseCard';
+import gains from '../../repositories/gains';
+import expenses from '../../repositories/expenses';
 
 import { Container, Content, Filters } from './styles';
 
@@ -15,7 +17,17 @@ interface IRouteParams {
     }
 }
 
+interface IData {
+    id: string;
+    description: string;
+    amountFormatted: string;
+    frequency: string;
+    dataFormated: string;
+    tagColor: string;
+}
+
 const List: React.FC<IRouteParams> = ({ match }) => {
+    const [data, setData] = useState<IData[]>([]);
 
     const { type } = match.params;
     const title = useMemo(() => {
@@ -25,6 +37,10 @@ const List: React.FC<IRouteParams> = ({ match }) => {
     const lineColor = useMemo(() => {
         return type === 'entry-balance' ? '#e7931b' : '#e44c4e'
     }, [type]);
+
+    const listData = useMemo(() => {
+        return type === 'entry-balance' ? gains : expenses;
+    },[]);
 
     const options = [
         {value: 'Hello', label: 'Hello'},
@@ -37,6 +53,20 @@ const List: React.FC<IRouteParams> = ({ match }) => {
         {value: 2020, label: 2020},
         {value: 2019, label: 2019}
     ];
+
+    useEffect(() => {
+        const response = listData.map(item => {
+            return {
+                id: String(Math.random() * data.length),
+                description: item.description,
+                amountFormatted: item.amount,
+                frequency: item.frequency,
+                dataFormated: item.date,
+                tagColor: item.frequency === 'recorrente' ? '#4e41f0' : '#e44c4e'
+            }
+        })
+        setData(response);
+    },[]);
 
     return (
         <Container>
@@ -51,13 +81,17 @@ const List: React.FC<IRouteParams> = ({ match }) => {
              </Filters>
 
              <Content>
-                <HistoryFinanseCard 
-                    cardColor="#313851"
-                    tagColor="#e44c4e"
-                    title="Счет за свет"
-                    subtitle="27/07/2021"
-                    amount="R$ 130,00"
-                />
+                {
+                    data.map(item => (
+                        <HistoryFinanseCard
+                            key={item.id} 
+                            tagColor={item.tagColor}
+                            title={item.description}
+                            subtitle={item.dataFormated}
+                            amount={item.amountFormatted}
+                        />
+                    ))
+                }
              </Content>
         </Container>    
     );
